@@ -9,17 +9,15 @@ lettergroup = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
 def getRandomChar(num,offset):
     if offset >= 0 and offset < 8 :
         random.seed()
+        splitlen = len(lettergroup) >> 1
         if num & (0x01 << offset):
-#            print lettergroup[0:18]
-            return random.sample(lettergroup[0:18],2)
+            return random.sample(lettergroup[0:splitlen],2)
         else:
-#            print lettergroup[18:]
-            return random.sample(lettergroup[18:],2)
+            return random.sample(lettergroup[splitlen:],2)
     return ''
 
 for i in range(1,201):
     inviteCode = ''
     for j in range(0,8):
-        rstr = ''.join(getRandomChar(i,j))
-        inviteCode += rstr
+        inviteCode += ''.join(getRandomChar(i,j))
     print 'inviteCode[%d]:%s' %(i,inviteCode)    
