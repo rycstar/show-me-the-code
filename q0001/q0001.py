@@ -15,9 +15,12 @@ def getRandomChar(num,offset):
         else:
             return random.sample(lettergroup[splitlen:],2)
     return ''
-
+#add file IO to record the inviteCodes.
+f = file('./invite_code.txt','w')
 for i in range(1,201):
     inviteCode = ''
     for j in range(0,8):
         inviteCode += ''.join(getRandomChar(i,j))
-    print 'inviteCode[%d]:%s' %(i,inviteCode)    
+#    print 'inviteCode[%d]:%s' %(i,inviteCode)    
+    f.write(inviteCode+'\n');
+f.close()
