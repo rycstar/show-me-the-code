@@ -35,21 +35,27 @@ def args_handler(argv):
     args = p.parse_args(argv[1:])
     return args
 
-def github_issue_save(href_val,session,full_mode):
+def github_issue_save(href_val,session,full_mode,close_state):
     issue_url = github_domain + href_val
     issues_values_soup = BeautifulSoup(session.get(issue_url).text,'html.parser')
     file_name = href_val.split('/')[-1]+'_issue.html'
     print 'filename:{0},full_mode:{1}'.format(file_name,full_mode)
     with codecs.open(file_name,'wb','utf-8') as f:
         if not full_mode:
-            issue_title = issues_values_soup.find_all('span',attrs={'class':'js-issue-title'})[0]
+            issue_title = issues_values_soup.find_all('div',attrs={'class':'gh-header-show'})[0]
+            issue_state = issues_values_soup.find_all('div',attrs={'class':'flex-table gh-header-meta'})[0]
             f.write(issue_title.prettify())
-            issue_comment = issues_values_soup.body.find_all('textarea',attrs={'aria-label':'Comment body'})
-            for x in xrange(len(issue_comment) - 1):
-                f.write(issue_comment[x].prettify())
+            f.write(issue_state.prettify())
+            issue_comment = issues_values_soup.body.find_all('div',attrs={'class':'edit-comment-hide'})
+            issue_timeline = issues_values_soup.body.find_all('div',attrs={'class':'timeline-comment-header-text'})
+            if len(issue_comment) == len(issue_timeline):
+                for x in xrange(len(issue_comment)):
+                    f.write(issue_comment[x].prettify())
+            else:
+                print 'timeline number is not same as comment, error! discard {0}'.format(file_name)
         else:
             f.write(issues_values_soup.prettify())
-        f.close() 
+        f.close()
 
 def github_login(session,user,password):
     log_soup = BeautifulSoup(session.get(github_login_url).text,'html.parser')
@@ -75,7 +81,7 @@ def github_issue_read(session,url,close_state,full_mode):
         print 'close state : {0} issue num:{1},next_page{2}'.format(close_state,len(issue_list),len(issue_list_soup.body.find_all(attrs={'class':'next_page'})))
         for x in xrange(len(issue_list)):
             time.sleep(4)
-            github_issue_save(issue_list[x].get('href'),session,full_mode)
+            github_issue_save(issue_list[x].get('href'),session,full_mode,close_state)
         next_page = issue_list_soup.body.find_all('a',attrs={'class':'next_page'})
         length = len(next_page)
         i = i + 1
