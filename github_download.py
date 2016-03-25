@@ -48,11 +48,17 @@ def github_issue_save(href_val,session,full_mode,close_state):
             f.write(issue_state.prettify())
             issue_comment = issues_values_soup.body.find_all('div',attrs={'class':'edit-comment-hide'})
             issue_timeline = issues_values_soup.body.find_all('div',attrs={'class':'timeline-comment-header-text'})
+            issue_assignee = issues_values_soup.body.find_all('div',attrs={'class':'discussion-sidebar-item sidebar-assignee js-discussion-sidebar-item'})
+            issue_labels = issues_values_soup.body.find_all('div',attrs={'class':'discussion-sidebar-item sidebar-labels js-discussion-sidebar-item'})
+            issue_milestone = issues_values_soup.body.find_all('div',attrs={'class':'discussion-sidebar-item sidebar-milestone js-discussion-sidebar-item'})
             if len(issue_comment) == len(issue_timeline):
                 for x in xrange(len(issue_comment)):
                     f.write(issue_comment[x].prettify())
             else:
                 print 'timeline number is not same as comment, error! discard {0}'.format(file_name)
+            f.write(issue_labels[0].prettify())
+            f.write(issue_milestone[0].prettify())
+            f.write(issue_assignee[0].prettify())
         else:
             f.write(issues_values_soup.prettify())
         f.close()
