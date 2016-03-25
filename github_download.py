@@ -30,17 +30,25 @@ def args_handler(argv):
     p = argparse.ArgumentParser(description='download from github.com')
     p.add_argument('-u','--user',action='store',default=None,type = str,help = 'Input user name')
     p.add_argument('-p','--password',action='store',default=None,type = str,help = 'Input password')
+    p.add_argument('-f','--fullmode',action='store',default=0,type = int,help = '1 == Down the whole issue html, 0 == down the title and comment only')
     p.add_argument('-l','--url',action='store',default='https://github.com/noboundary/xGui/issues',type = str,help = 'Input src issue url')
     args = p.parse_args(argv[1:])
     return args
 
-def github_issue_save(href_val,session):
+def github_issue_save(href_val,session,full_mode):
     issue_url = github_domain + href_val
     issues_values_soup = BeautifulSoup(session.get(issue_url).text,'html.parser')
-    file_name = href_val.split('/')[-1]
-    print file_name
+    file_name = href_val.split('/')[-1]+'_issue.html'
+    print 'filename:{0},full_mode:{1}'.format(file_name,full_mode)
     with codecs.open(file_name,'wb','utf-8') as f:
-        f.write(issues_values_soup.prettify())
+        if not full_mode:
+            issue_title = issues_values_soup.find_all('span',attrs={'class':'js-issue-title'})[0]
+            f.write(issue_title.prettify())
+            issue_comment = issues_values_soup.body.find_all('textarea',attrs={'aria-label':'Comment body'})
+            for x in xrange(len(issue_comment) - 1):
+                f.write(issue_comment[x].prettify())
+        else:
+            f.write(issues_values_soup.prettify())
         f.close() 
 
 def github_login(session,user,password):
@@ -52,7 +60,7 @@ def github_login(session,user,password):
     response = session.post(github_login_post_url,data=github_login_data,headers=header)
     print response
 
-def github_issue_read(session,url,close_state):
+def github_issue_read(session,url,close_state,full_mode):
     if (close_state == False):
         github_issue_query_data['q'] = 'is:open is:issue'
     else:
@@ -67,7 +75,7 @@ def github_issue_read(session,url,close_state):
         print 'close state : {0} issue num:{1},next_page{2}'.format(close_state,len(issue_list),len(issue_list_soup.body.find_all(attrs={'class':'next_page'})))
         for x in xrange(len(issue_list)):
             time.sleep(4)
-            github_issue_save(issue_list[x].get('href'),session)
+            github_issue_save(issue_list[x].get('href'),session,full_mode)
         next_page = issue_list_soup.body.find_all('a',attrs={'class':'next_page'})
         length = len(next_page)
         i = i + 1
@@ -79,8 +87,8 @@ def main(argv):
     github_session = requests.session()
     github_login(github_session,args.user,args.password)
     time.sleep(2)
-    github_issue_read(github_session,args.url,True)
-    github_issue_read(github_session,args.url,False)
+    github_issue_read(github_session,args.url,True,args.fullmode)
+    github_issue_read(github_session,args.url,False,args.fullmode)
 
 if __name__ == '__main__':
     argv = sys.argv
